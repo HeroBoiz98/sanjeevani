@@ -19,7 +19,7 @@ mongoose.connect('mongodb+srv://sanjeevani:sanjeeVaniMeds@sanjeevani.exguf.mongo
 // Define the medicine schema and model
 const medicineSchema = new mongoose.Schema({
     genericName: String,
-    composition: String,
+    composition: [String], // Change this line to store an array of strings
     cure: String,
     dosage: {
         under6: String,
@@ -47,7 +47,7 @@ app.post('/add-medicine', async (req, res) => {
 
         const newMedicine = new Medicine({
             genericName,
-            composition,
+            composition, // This will now be an array
             cure,
             dosage,
             whenToConsume,
@@ -82,7 +82,7 @@ app.put('/medicines/:id', async (req, res) => {
     try {
         const updatedMedicine = await Medicine.findByIdAndUpdate(id, {
             genericName,
-            composition,
+            composition, // This will now be an array
             cure,
             dosage,
             whenToConsume,
