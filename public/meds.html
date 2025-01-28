@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicines List</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #searchBar {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px; /* Space between cards */
+            max-width: 1200px; /* Set a max width for the container */
+            margin: 0 auto; /* Center the container */
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.2s;
+            width: 300px; /* Fixed width for cards */
+            max-width: 100%; /* Responsive */
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            color: #28a745;
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+        .card .medform {
+            font-weight: bold;
+        }
+
+        .edit-button, .delete-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .edit-button:hover, .delete-button:hover {
+            background-color: #0056b3;
+        }
+
+        .edit-form {
+            display: none;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .edit-form input {
+            width: calc(100% - 20px);
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .dosage-section {
+            margin-top: 10px;
+        }
+
+        .dosage-section h3 {
+            margin: 0 0 10px;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Media Queries for Responsive Design */
+        @media (max-width: 768px) {
+            .card {
+                width: 100%; /* Full width on smaller screens */
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .card {
+                width: calc(50% - 20px); /* Two cards per row */
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .card {
+                width: calc(33.33% - 20px); /* Three cards per row */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Medicines List</h1>
+    <input type="text" id="searchBar" placeholder="Search for medicines..." onkeyup="searchMedicines()">
+    <div class="container" id="medicinesContainer"></div>
+
+    <script>
+        let medicines = []; // Store medicines globally
+
+        // Fetch medicines from the server
+        fetch('/medicines')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                medicines = data; // Store fetched medicines
+                displayMedicines(medicines); // Display all medicines initially
+            })
+            .catch(error => {
+                console.error('Error fetching medicines:', error);
+                const container = document.getElementById('medicinesContainer');
+                container.innerHTML = '<p>Error fetching medicines. Please try again later.</p>';
+            });
+
+        // Function to display medicines
+        function displayMedicines(medicinesToDisplay) {
+            const container = document.getElementById('medicinesContainer');
+            container.innerHTML = ''; // Clear previous content
+            medicinesToDisplay.forEach(medicine => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h2>${medicine.genericName}</h2>
+                    <p><strong>Composition:</strong> ${medicine.composition}</p>
+                    <p><strong>Cure:</strong> ${medicine.cure}</p>
+                    <p><strong>Dosage:</strong></p>
+                    <ul>
+                        <li>Under 6: ${medicine.dosage.under6}</li>
+                        <li>6-12: ${medicine.dosage.sixTo12}</li>
+                        <li>12-18: ${medicine.dosage.twelveTo18}</li>
+                        <li>Adult: ${medicine.dosage.adult}</li>
+                        <li>60+: ${medicine.dosage.sixtyPlus}</li>
+                    </ul>
+                    <p><strong>When to Consume:</strong> ${medicine.whenToConsume}</p>
+                    <p><strong>Exception:</strong> ${medicine.exception || 'None'}</p>
+                    <p><strong>Price:</strong> $${medicine.price.toFixed(2)}</p>
+                    <p class="medform"><strong>Forms:</strong> ${medicine.medform.join(', ')}</p>
+                    <p><strong>Type:</strong> ${medicine.medType}</p>
+                    <button class="edit-button" onclick="showEditForm('${medicine._id}')">Edit</button>
+                    <button class="delete-button" onclick="deleteMedicine('${medicine._id}')">Delete</button>
+                    <div class="edit-form" id="editForm-${medicine._id}">
+                        <h3>Edit Medicine Details</h3>
+                        <label class="label">Generic Name</label>
+                        <input type="text" value="${medicine.genericName}" id="editGenericName-${medicine._id}">
+                        <label class="label">Composition</label>
+                        <input type="text" value="${medicine.composition}" id="editComposition-${medicine._id}">
+                        <label class="label">Cure</label>
+                        <input type="text" value="${medicine.cure}" id="editCure-${medicine._id}">
+                        <label class="label">When to Consume</label>
+                        <input type="text" value="${medicine.whenToConsume}" id="editWhenToConsume-${medicine._id}">
+                        <label class="label">Exception</label>
+                        <input type="text" value="${medicine.exception}" id="editException-${medicine._id}">
+                        <label class="label">Price</label>
+                        <input type="number" value="${medicine.price}" id="editPrice-${medicine._id}">
+                        <label class="label">Medicine Type</label>
+                        <input type="text" value="${medicine.medType}" id="editMedType-${medicine._id}">
+                        <label class="label">Forms (comma separated)</label>
+                        <input type="text" value="${medicine.medform.join(', ')}" id="editMedform-${medicine._id}">
+
+                        <div class="dosage-section">
+                            <h3>Dosage</h3>
+                            <label class="label">Under 6</label>
+                            <input type="text" value="${medicine.dosage.under6}" id="editDosageUnder6-${medicine._id}">
+                            <label class="label">6-12</label>
+                            <input type="text" value="${medicine.dosage.sixTo12}" id="editDosageSixTo12-${medicine._id}">
+                            <label class="label">12-18</label>
+                            <input type="text" value="${medicine.dosage.twelveTo18}" id="editDosageTwelveTo18-${medicine._id}">
+                            <label class="label">Adult</label>
+                            <input type="text" value="${medicine.dosage.adult}" id="editDosageAdult-${medicine._id}">
+                            <label class="label">60+</label>
+                            <input type="text" value="${medicine.dosage.sixtyPlus}" id="editDosageSixtyPlus-${medicine._id}">
+                        </div>
+
+                        <button onclick="updateMedicine('${medicine._id}')">Update</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Search function
+        function searchMedicines() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const filteredMedicines = medicines.filter(medicine => {
+                return (
+                    medicine.genericName.toLowerCase().includes(query) ||
+                    medicine.composition.toLowerCase().includes(query) ||
+                    medicine.cure.toLowerCase().includes(query) ||
+                    medicine.medType.toLowerCase().includes(query)
+                );
+            });
+            displayMedicines(filteredMedicines); // Display filtered medicines
+        }
+
+        function showEditForm(id) {
+            const form = document.getElementById(`editForm-${id}`);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateMedicine(id) {
+            const genericName = document.getElementById(`editGenericName-${id}`).value;
+            const composition = document.getElementById(`editComposition-${id}`).value;
+            const cure = document.getElementById(`editCure-${id}`).value;
+            const whenToConsume = document.getElementById(`editWhenToConsume-${id}`).value;
+            const exception = document.getElementById(`editException-${id}`).value;
+            const price = document.getElementById(`editPrice-${id}`).value;
+            const medType = document.getElementById(`editMedType-${id}`).value;
+            const medform = document.getElementById(`editMedform-${id}`).value.split(',').map(item => item.trim());
+
+            // Get dosage values
+            const dosage = {
+                under6: document.getElementById(`editDosageUnder6-${id}`).value,
+                sixTo12: document.getElementById(`editDosageSixTo12-${id}`).value,
+                twelveTo18: document.getElementById(`editDosageTwelveTo18-${id}`).value,
+                adult: document.getElementById(`editDosageAdult-${id}`).value,
+                sixtyPlus: document.getElementById(`editDosageSixtyPlus-${id}`).value,
+            };
+
+            const updatedMedicine = {
+                genericName,
+                composition,
+                cure,
+                whenToConsume,
+                exception,
+                price,
+                medType,
+                medform,
+                dosage, // Include dosage in the update
+            };
+
+            fetch(`/medicines/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedMedicine),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Medicine updated successfully!');
+                    location.reload(); // Reload the page to see the updated medicine
+                } else {
+                    alert('Error updating medicine.');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating medicine:', error);
+                alert('Error updating medicine.');
+            });
+        }
+
+        function deleteMedicine(id) {
+            if (confirm('Are you sure you want to delete this medicine?')) {
+                fetch(`/medicines/${id}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Medicine deleted successfully!');
+                        location.reload(); // Reload the page to see the updated medicine list
+                    } else {
+                        alert('Error deleting medicine.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting medicine:', error);
+                    alert('Error deleting medicine.');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
