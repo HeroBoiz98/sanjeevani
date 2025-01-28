@@ -160,7 +160,7 @@
                 card.className = 'card';
                 card.innerHTML = `
                     <h2>${medicine.genericName}</h2>
-                    <p><strong>Composition:</strong> ${medicine.composition}</p>
+                    <p><strong>Composition:</strong> ${medicine.composition.join(', ')}</p> <!-- Updated to display array -->
                     <p><strong>Cure:</strong> ${medicine.cure}</p>
                     <p><strong>Dosage:</strong></p>
                     <ul>
@@ -181,8 +181,8 @@
                         <h3>Edit Medicine Details</h3>
                         <label class="label">Generic Name</label>
                         <input type="text" value="${medicine.genericName}" id="editGenericName-${medicine._id}">
-                        <label class="label">Composition</label>
-                        <input type="text" value="${medicine.composition}" id="editComposition-${medicine._id}">
+                        <label class="label">Composition (comma separated)</label>
+                        <input type="text" value="${medicine.composition.join(', ')}" id="editComposition-${medicine._id}"> <!-- Updated to display array -->
                         <label class="label">Cure</label>
                         <input type="text" value="${medicine.cure}" id="editCure-${medicine._id}">
                         <label class="label">When to Consume</label>
@@ -193,8 +193,6 @@
                         <input type="number" value="${medicine.price}" id="editPrice-${medicine._id}">
                         <label class="label">Medicine Type</label>
                         <input type="text" value="${medicine.medType}" id="editMedType-${medicine._id}">
-                        <label class="label">Forms (comma separated)</label>
-                        <input type="text" value="${medicine.medform.join(', ')}" id="editMedform-${medicine._id}">
 
                         <div class="dosage-section">
                             <h3>Dosage</h3>
@@ -223,7 +221,7 @@
             const filteredMedicines = medicines.filter(medicine => {
                 return (
                     medicine.genericName.toLowerCase().includes(query) ||
-                    medicine.composition.toLowerCase().includes(query) ||
+                    medicine.composition.some(comp => comp.toLowerCase().includes(query)) || // Check in composition array
                     medicine.cure.toLowerCase().includes(query) ||
                     medicine.medType.toLowerCase().includes(query)
                 );
@@ -238,13 +236,12 @@
 
         function updateMedicine(id) {
             const genericName = document.getElementById(`editGenericName-${id}`).value;
-            const composition = document.getElementById(`editComposition-${id}`).value;
+            const composition = document.getElementById(`editComposition-${id}`).value.split(',').map(item => item.trim()); // Convert to array
             const cure = document.getElementById(`editCure-${id}`).value;
             const whenToConsume = document.getElementById(`editWhenToConsume-${id}`).value;
             const exception = document.getElementById(`editException-${id}`).value;
             const price = document.getElementById(`editPrice-${id}`).value;
             const medType = document.getElementById(`editMedType-${id}`).value;
-            const medform = document.getElementById(`editMedform-${id}`).value.split(',').map(item => item.trim());
 
             // Get dosage values
             const dosage = {
@@ -263,7 +260,6 @@
                 exception,
                 price,
                 medType,
-                medform,
                 dosage, // Include dosage in the update
             };
 
