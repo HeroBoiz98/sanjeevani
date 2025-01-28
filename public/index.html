@@ -103,7 +103,7 @@
         <label for="genericName">Medicine Name:</label>
         <input type="text" id="genericName" name="genericName" required>
 
-        <label for="composition">Medicine Composition:</label>
+        <label for="composition">Medicine Composition (comma separated):</label>
         <input type="text" id="composition" name="composition" required>
 
         <label for="cure">Its Use (Cure):</label>
@@ -154,6 +154,9 @@
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
+
+            // Convert composition string to an array
+            data.composition = data.composition.split(',').map(item => item.trim());
 
             // Nest dosage fields into an object
             data.dosage = {
