@@ -31,8 +31,8 @@ const medicineSchema = new mongoose.Schema({
     whenToConsume: String,
     exception: String,
     price: Number,
-    medType: String,  // New field for medicine type
-    medform: [String],  // New array field for forms (tablet, syrup, capsule)
+    medType: String,
+    medform: [String],
 });
 
 const Medicine = mongoose.model('meds', medicineSchema);
@@ -53,14 +53,69 @@ app.post('/add-medicine', async (req, res) => {
             whenToConsume,
             exception,
             price,
-            medType,   // Save the medType value
-            medform,   // Save the selected forms (tablet, syrup, capsule)
+            medType,
+            medform,
         });
 
         await newMedicine.save();
         res.status(201).send('Medicine added successfully!');
     } catch (error) {
         res.status(500).send('Error saving medicine: ' + error.message);
+    }
+});
+
+// Endpoint to fetch all medicines
+app.get('/medicines', async (req, res) => {
+    try {
+        const medicines = await Medicine.find();
+        res.status(200).json(medicines);
+    } catch (error) {
+        res.status(500).send('Error fetching medicines: ' + error.message);
+    }
+});
+
+// Endpoint to update a medicine
+app.put('/medicines/:id', async (req, res) => {
+    const { id } = req.params;
+    const { genericName, composition, cure, dosage, whenToConsume, exception, price, medType, medform } = req.body;
+
+    try {
+        const updatedMedicine = await Medicine.findByIdAndUpdate(id, {
+            genericName,
+            composition,
+            cure,
+            dosage,
+            whenToConsume,
+            exception,
+            price,
+            medType,
+            medform,
+        }, { new: true });
+
+        if (!updatedMedicine) {
+            return res.status(404).send('Medicine not found.');
+        }
+
+        res.status(200).send('Medicine updated successfully.');
+    } catch (error) {
+        res.status(500).send('Error updating medicine: ' + error.message);
+    }
+});
+
+// Endpoint to delete a medicine
+app.delete('/medicines/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedMedicine = await Medicine.findByIdAndDelete(id);
+
+        if (!deletedMedicine) {
+            return res.status(404).send('Medicine not found.');
+        }
+
+        res.status(200).send('Medicine deleted successfully.');
+    } catch (error) {
+        res.status(500).send('Error deleting medicine: ' + error.message);
     }
 });
 
