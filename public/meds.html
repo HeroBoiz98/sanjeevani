@@ -172,7 +172,7 @@
                     </ul>
                     <p><strong>When to Consume:</strong> ${medicine.whenToConsume}</p>
                     <p><strong>Exception:</strong> ${medicine.exception || 'None'}</p>
-                    <p><strong>Price:</strong> $${medicine.price.toFixed(2)}</p>
+                    <p><strong>Price:</strong> ₹${medicine.price.toFixed(2)}</p>
                     <p class="medform"><strong>Forms:</strong> ${medicine.medform.join(', ')}</p>
                     <p><strong>Type:</strong> ${medicine.medType}</p>
                     <button class="edit-button" onclick="showEditForm('${medicine._id}')">Edit</button>
