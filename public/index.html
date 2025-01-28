@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Medicine</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the CSS file -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Sanjeevani Meds - Database Entry</h1>
+    <form id="medicineForm" action="/add-medicine" method="POST">
+        <label for="genericName">Medicine Name:</label>
+        <input type="text" id="genericName" name="genericName" required>
+
+        <label for="composition">Medicine Composition:</label>
+        <input type="text" id="composition" name="composition" required>
+
+        <label for="cure">Its Use (Cure):</label>
+        <input type="text" id="cure" name="cure" required>
+
+        <label>Dosage:</label>
+        <label for="under6">Under 6:</label>
+        <input type="text" id="under6" name="dosage[under6]">
+        <label for="6to12">6-12:</label>
+        <input type="text" id="6to12" name="dosage[6to12]">
+        <label for="12to18">12-18:</label>
+        <input type="text" id="12to18" name="dosage[12to18]">
+        <label for="adult">Adult:</label>
+        <input type="text" id="adult" name="dosage[adult]">
+        <label for="60plus">60+:</label>
+        <input type="text" id="60plus" name="dosage[60plus]">
+
+        <label for="whenToConsume">When to Consume:</label>
+        <input type="text" id="whenToConsume" name="whenToConsume" required>
+
+        <label for="exception">Exception (Whom Should Not Consume):</label>
+        <input type="text" id="exception" name="exception">
+
+        <label for="price">Price:</label>
+        <input type="number" id="price" name="price" required>
+
+        <!-- Medform checkboxes -->
+        <label>Medicine Form:</label>
+        <label for="tablet">Tablet</label>
+        <input type="checkbox" id="tablet" name="medform" value="tablet">
+        <label for="syrup">Syrup</label>
+        <input type="checkbox" id="syrup" name="medform" value="syrup">
+        <label for="capsule">Capsule</label>
+        <input type="checkbox" id="capsule" name="medform" value="capsule">
+
+        <!-- New Input for Medicine Type -->
+        <label for="medType">Medicine Type:</label>
+        <input type="text" id="medType" name="medType" required>
+
+        <button type="submit">Add Medicine</button>
+    </form>
+
+    <div class="notification" id="notification">Medicine added successfully!</div>
+
+    <script>
+        document.getElementById('medicineForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // Nest dosage fields into an object
+            data.dosage = {
+                under6: data['dosage[under6]'] || "",
+                sixTo12: data['dosage[6to12]'] || "",
+                twelveTo18: data['dosage[12to18]'] || "",
+                adult: data['dosage[adult]'] || "",
+                sixtyPlus: data['dosage[60plus]'] || "",
+            };
+
+            // Remove flat dosage fields
+            delete data['dosage[under6]'];
+            delete data['dosage[6to12]'];
+            delete data['dosage[12to18]'];
+            delete data['dosage[adult]'];
+            delete data['dosage[60plus]'];
+
+            // Get the selected medicine forms (checkboxes)
+            const medform = [];
+            if (document.getElementById('tablet').checked) {
+                medform.push('tablet');
+            }
+            if (document.getElementById('syrup').checked) {
+                medform.push('syrup');
+            }
+            if (document.getElementById('capsule').checked) {
+                medform.push('capsule');
+            }
+
+            // Add the selected medform values to the data object
+            data.medform = medform;
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification();
+                    this.reset(); // Reset the form fields
+                } else {
+                    alert('Error adding medicine. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding medicine. Please try again.');
+            });
+        });
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // Hide notification after 3 seconds
+        }
+    </script>
+</body>
+</html>
